@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CodeAlpha — Image Gallery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #222;
+      --accent: #e8ff47;
+      --text: #f0f0f0;
+      --muted: #666;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 2.5rem 3rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      letter-spacing: 0.05em;
+      color: var(--accent);
+    }
+
+    header span {
+      font-size: 0.85rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .filters {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-btn {
+      padding: 0.4rem 1.1rem;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
+
+    .gallery {
+      columns: 3;
+      column-gap: 1rem;
+      padding: 1.5rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) { .gallery { columns: 2; padding: 1rem 1.5rem; } }
+    @media (max-width: 500px) { .gallery { columns: 1; } .filters { padding: 1rem 1.5rem; } header { padding: 1.5rem; } }
+
+    .gallery-item {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+      position: relative;
+      overflow: hidden;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: transform 0.3s ease;
+    }
+
+    .gallery-item:hover { transform: translateY(-4px); }
+
+    .gallery-item img {
+      width: 100%;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+
+    .gallery-item:hover img { transform: scale(1.04); }
+
+    .item-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+    }
+
+    .gallery-item:hover .item-overlay { opacity: 1; }
+
+    .item-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .category-tag {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: rgba(0,0,0,0.7);
+      color: var(--muted);
+      font-size: 0.65rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 2px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.95);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .lightbox.open { display: flex; animation: fadeIn 0.25s ease; }
+
+    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+    .lightbox-img-wrap {
+      position: relative;
+      max-width: 90vw;
+      max-height: 80vh;
+    }
+
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 78vh;
+      object-fit: contain;
+      border-radius: 4px;
+      display: block;
+    }
+
+    .lightbox-caption {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .lightbox-close {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 1.2rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lightbox-close:hover { border-color: var(--accent); color: var(--accent); }
+
+    .lightbox-nav {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 1.3rem;
+      width: 3rem;
+      height: 3rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 2px;
+    }
+
+    .lightbox-nav:hover { border-color: var(--accent); color: var(--accent); }
+    .lightbox-prev { left: 1.5rem; }
+    .lightbox-next { right: 1.5rem; }
+
+    .lightbox-counter {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Gallery</h1>
+  
+</header>
+
+<div class="filters">
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="nature">Nature</button>
+  <button class="filter-btn" data-filter="architecture">Architecture</button>
+  <button class="filter-btn" data-filter="abstract">Abstract</button>
+  <button class="filter-btn" data-filter="travel">Travel</button>
+</div>
+
+<div class="gallery" id="gallery"></div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lbClose">✕</button>
+  <button class="lightbox-nav lightbox-prev" id="lbPrev">‹</button>
+  <div class="lightbox-img-wrap">
+    <img id="lbImg" src="" alt=""/>
+  </div>
+  <div class="lightbox-caption" id="lbCaption"></div>
+  <button class="lightbox-nav lightbox-next" id="lbNext">›</button>
+  <div class="lightbox-counter" id="lbCounter"></div>
+</div>
+
+<footer></footer>
+
+<script>
+  const images = [
+    { src: 'https://picsum.photos/seed/forest1/600/800',  label: 'Forest Light',   cat: 'nature' },
+    { src: 'https://picsum.photos/seed/arch2/700/500',   label: 'Urban Lines',     cat: 'architecture' },
+    { src: 'https://picsum.photos/seed/abs3/600/600',    label: 'Color Theory',    cat: 'abstract' },
+    { src: 'https://picsum.photos/seed/travel4/600/400', label: 'Coastal Roads',   cat: 'travel' },
+    { src: 'https://picsum.photos/seed/nature5/500/700', label: 'Morning Dew',     cat: 'nature' },
+    { src: 'https://picsum.photos/seed/city6/700/600',   label: 'Glass Facade',    cat: 'architecture' },
+    { src: 'https://picsum.photos/seed/abs7/600/500',    label: 'Digital Waves',   cat: 'abstract' },
+    { src: 'https://picsum.photos/seed/travel8/700/500', label: 'Mountain Pass',   cat: 'travel' },
+    { src: 'https://picsum.photos/seed/nat9/600/700',    label: 'Autumn Gold',     cat: 'nature' },
+    { src: 'https://picsum.photos/seed/arch10/700/800',  label: 'Steel & Glass',   cat: 'architecture' },
+    { src: 'https://picsum.photos/seed/abs11/600/600',   label: 'Liquid Form',     cat: 'abstract' },
+    { src: 'https://picsum.photos/seed/trav12/700/500',  label: 'Desert Horizon',  cat: 'travel' },
+  ];
+
+  const gallery = document.getElementById('gallery');
+  let filteredImages = [...images];
+  let currentIndex = 0;
+
+  function renderGallery(items) {
+    gallery.innerHTML = '';
+    items.forEach((img, i) => {
+      const item = document.createElement('div');
+      item.className = 'gallery-item';
+      item.innerHTML = `
+        <img src="${img.src}" alt="${img.label}" loading="lazy"/>
+        <div class="item-overlay"><span class="item-label">${img.label}</span></div>
+        <div class="category-tag">${img.cat}</div>
+      `;
+      item.addEventListener('click', () => openLightbox(i));
+      gallery.appendChild(item);
+    });
+  }
+
+  function openLightbox(index) {
+    currentIndex = index;
+    updateLightbox();
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function updateLightbox() {
+    const img = filteredImages[currentIndex];
+    document.getElementById('lbImg').src = img.src;
+    document.getElementById('lbCaption').textContent = `${img.label} · ${img.cat}`;
+    document.getElementById('lbCounter').textContent = `${currentIndex + 1} / ${filteredImages.length}`;
+  }
+
+  function navigate(dir) {
+    currentIndex = (currentIndex + dir + filteredImages.length) % filteredImages.length;
+    updateLightbox();
+  }
+
+  document.getElementById('lbClose').addEventListener('click', closeLightbox);
+  document.getElementById('lbPrev').addEventListener('click', () => navigate(-1));
+  document.getElementById('lbNext').addEventListener('click', () => navigate(1));
+  document.getElementById('lightbox').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeLightbox();
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key === 'ArrowLeft') navigate(-1);
+    if (e.key === 'ArrowRight') navigate(1);
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      filteredImages = filter === 'all' ? [...images] : images.filter(i => i.cat === filter);
+      renderGallery(filteredImages);
+    });
+  });
+
+  renderGallery(images);
+</script>
+</body>
+</html>
